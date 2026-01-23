@@ -1,0 +1,62 @@
+--- src/alphafold3/data/pipeline.py.ori	2024-11-18 14:21:34.561557166 +0100
++++ src/alphafold3/data/pipeline.py	2024-11-18 14:54:03.409434368 +0100
+@@ -16,6 +16,7 @@
+ import functools
+ import logging
+ import time
++import os
+ 
+ from alphafold3.common import folding_input
+ from alphafold3.constants import mmcif_names
+@@ -228,8 +229,17 @@
+   pdb_database_path: str
+ 
+   # Optional configuration for MSA tools.
+-  jackhmmer_n_cpu: int = 8
+-  nhmmer_n_cpu: int = 8
++  # set number of cpu to use, respect environnement variable if set
++  jackhmmer_n_cpu: int = int(os.environ.get('ALPHAFOLD_JACKHMMER_N_CPU',8))
++  nhmmer_n_cpu: int = int(os.environ.get('ALPHAFOLD_NHMMER_N_CPU',8))
++  # but avoid over commit ;-)
++  cpu_av: int = min(len(os.sched_getaffinity(0)),8)
++  if jackhmmer_n_cpu > cpu_av:
++      print('jackhmmer_n_cpu ({}) greater than available cpu ({}):reduced to {}'.format(jackhmmer_n_cpu, cpu_av, cpu_av))
++      jackhmmer_n_cpu= cpu_av
++  if nhmmer_n_cpu > cpu_av:
++      print('nhmmer_n_cpu ({}) greater than available cpu ({}):reduced to {}'.format(nhmmer_n_cpu, cpu_av, cpu_av))
++      nhmmer_n_cpu = cpu_av
+ 
+   max_template_date: datetime.date
+
+--- src/alphafold3/data/tools/nhmmer.py.ori	2024-11-18 14:51:25.486624503 +0100
++++ src/alphafold3/data/tools/nhmmer.py	2024-11-18 14:52:41.446921965 +0100
+@@ -77,6 +77,14 @@
+       raise ValueError(f'Invalid {alphabet=}, only "rna" or "dna" supported')
+ 
+     self._e_value = e_value
++    n_cpu: int = int(os.environ.get('ALPHAFOLD_JACKHMMER_N_CPU',n_cpu))
++    # but avoid over commit ;-)
++    cpu_av: int = min(len(os.sched_getaffinity(0)),8)
++    if n_cpu > cpu_av:
++      print('n_cpu ({}) greater than available cpu ({}):reduced to {}'.format(n_cpu, cpu_av, cpu_av))
++      n_cpu = cpu_av
++
++
+     self._n_cpu = n_cpu
+     self._max_sequences = max_sequences
+     self._filter_f3 = filter_f3
+--- src/alphafold3/data/tools/jackhmmer.py.ori	2024-11-18 14:43:28.630937803 +0100
++++ src/alphafold3/data/tools/jackhmmer.py	2024-11-18 15:24:46.857384345 +0100
+@@ -64,6 +64,12 @@
+     if not os.path.exists(self.database_path):
+       raise ValueError(f'Could not find Jackhmmer database {database_path}')
+ 
++    n_cpu: int = int(os.environ.get('ALPHAFOLD_JACKHMMER_N_CPU',n_cpu))
++    # but avoid over commit ;-)
++    cpu_av: int = min(len(os.sched_getaffinity(0)),8)
++    if n_cpu > cpu_av:
++        print('n_cpu ({}) greater than available cpu ({}):reduced to {}'.format(n_cpu, cpu_av, cpu_av))
++        n_cpu = cpu_av
+     self.n_cpu = n_cpu
+     self.n_iter = n_iter
+     self.e_value = e_value

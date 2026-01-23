@@ -1,0 +1,107 @@
+#!/bin/sh
+
+myArray=( "$@" )
+if [[ ! " ${myArray[*]}" =~ " --help" ]]; then
+    #---- forbid usage of alphafold on submit node.
+    #     unless help required
+    if [[ $(hostname) = "maestro-submit" ]]; then 
+        cat << EOT
+************************************************************
+*                                                          *
+*    you MUST run alphafold trough a slurm allocation      *
+*        either srun or salloc                             *
+*    exiting now                                           *
+************************************************************
+EOT
+        exit -1
+    fi 
+fi
+
+source /opt/gensoft/adm/etc/profile.d/modules.sh && module load apptainer
+
+# bind mount specific FS to be abble to accces usual files
+# /pasteur => homes, projets
+# /local => scratch, databases
+# /mount => gensoft 
+# ${HOME} to be sure to have ~ 
+
+# bind mount not always available: cluster vs other machine
+MOUNTS=''
+if [ -d /pasteur ]; then MOUNTS="${MOUNTS} -B /pasteur"; fi
+if [ -d /local/databases ]; then MOUNTS="${MOUNTS} -B /local/databases"; fi
+if [ -d /local/scratch ]; then MOUNTS="${MOUNTS} -B /local/scratch"; fi
+if [ -d /mount ]; then MOUNTS="${MOUNTS} -B /mount"; fi
+if [ -d /run/user/${UID} ]; then MOUNTS="${MOUNTS} -B /run/user/${UID}"; fi
+if [ -d ${ALPHAFOLD_DATA} ]; then MOUNTS="${MOUNTS} -B ${ALPHAFOLD_DATA}"; 
+else
+    echo "${ALPHAFOLD_DATA} no such directory: abort";
+    exit 1
+fi
+if [ ! -z ${TMPDIR} ]; then MOUNTS="${MOUNTS} -B ${TMPDIR}:/tmp"; fi
+
+#---- set OPENMM_CPU_THREADS to fit SLURM_CPUS_PER_TASK if not defined
+#     else set it to just 1 thread
+OPENMM_CPU_THREADS=${OPENMM_CPU_THREADS:-${SLURM_CPUS_PER_TASK:-1}}
+ALPHAFOLD_JACKHMMER_N_CPU=${ALPHAFOLD_JACKHMMER_N_CPU:-${SLURM_CPUS_PER_TASK:-1}}
+ALPHAFOLD_HHBLITS_N_CPU=${ALPHAFOLD_HHBLITS_N_CPU:-${SLURM_CPUS_PER_TASK:-1}}
+XLA_OPT=${XLA_PYTHON_CLIENT_MEM_FRACTION:-4.0}
+TF_OPT=${TF_FORCE_UNIFIED_MEMORY:-1}
+
+#---- alow run outside slurm
+SLURM_CPUS_PER_TASK=${SLURM_CPUS_PER_TASK:-1}
+
+#---- do not allow OPENMM_OPT ALPHAFOLD_JACKHMMER_N_CPU ALPHAFOLD_HHBLITS_N_CPU to be
+#     more than SLURM_CPUS_PER_TASK
+if [[ ${ALPHAFOLD_JACKHMMER_N_CPU} -gt ${SLURM_CPUS_PER_TASK} ]]
+then
+    echo "WARNING: ALPHAFOLD_JACKHMMER_N_CPU greater than SLURM_CPUS_PER_TASK, reduced to: ${SLURM_CPUS_PER_TASK}"
+    ALPHAFOLD_JACKHMMER_N_CPU=${SLURM_CPUS_PER_TASK}
+fi
+
+if [[ ${ALPHAFOLD_HHBLITS_N_CPU} -gt ${SLURM_CPUS_PER_TASK} ]]
+then
+    echo "WARNING: ALPHAFOLD_HHBLITS_N_CPU greater than SLURM_CPUS_PER_TASK, reduced to: ${SLURM_CPUS_PER_TASK}"
+    ALPHAFOLD_HHBLITS_N_CPU=${SLURM_CPUS_PER_TASK}
+fi
+
+
+
+ENV_OPT="--env PYTHONNOUSERSITE=1,TF_FORCE_UNIFIED_MEMORY=${TF_OPT},XLA_PYTHON_CLIENT_MEM_FRACTION=${XLA_OPT},ALPHAFOLD_JACKHMMER_N_CPU=${ALPHAFOLD_JACKHMMER_N_CPU},ALPHAFOLD_HHBLITS_N_CPU=${ALPHAFOLD_HHBLITS_N_CPU},OPENMM_PLATFORM=${OPENMM_PLATFORM},NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES}"
+
+if [[ ${OPENMM_PLATFORM} = "CPU" ]]
+then
+    if [[ ${OPENMM_CPU_THREADS} -gt ${SLURM_CPUS_PER_TASK} ]]
+    then
+        echo "WARNING: OPENMM_CPU_THREADS greater than SLURM_CPUS_PER_TASK, reduced to: ${SLURM_CPUS_PER_TASK}"
+        OPENMM_CPU_THREADS=${SLURM_CPUS_PER_TASK}
+    fi
+    ENV_OPT+=",OPENMM_CPU_THREADS=${OPENMM_CPU_THREADS}"
+fi
+
+#---- always run with cuda support
+NV=--nv
+#---- APPTAINER_BINDPATH can be set in order to bind mount additional volumes
+
+test "x$DEBUG" = xx && cat <<EOT 
+"############################################################" 
+apptainer run --cleanenv ${NV} ${ENV_OPT} \
+                -B ${HOME} \
+                ${MOUNTS} \
+                /opt/gensoft/exe/alphafold/2.3.2/libexec/alphafold-2.3.2.simg \
+                ${1+"$@"} 
+"############################################################\n"
+EOT
+
+apptainer run --cleanenv ${NV} ${ENV_OPT} \
+                 -B ${HOME} \
+                 ${MOUNTS} \
+                 -B ~/alphafold2/alphafold_custom/:/opt/alphafold/ \
+                 /opt/gensoft/exe/alphafold/2.3.2/libexec/alphafold-2.3.2.simg \
+                 ${1+"$@"}
+
+#apptainer run --cleanenv ${NV} ${ENV_OPT} \
+#                 -B ${HOME} \
+#                 ${MOUNTS} \
+#                 /opt/gensoft/exe/alphafold/2.3.2/libexec/alphafold-2.3.2.simg \
+#                 ${1+"$@"}
+
