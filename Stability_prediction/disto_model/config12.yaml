@@ -1,0 +1,16 @@
+model:
+  L_max: 1024
+  depth: 5
+  dropout: 0.1
+  hidden_channels: 64
+  type: RGCN
+training:
+  batch_size: 32
+  data_path: /pasteur/appa/scratch/nportal/MISATO/Affinity/pt_folder_distance_distogram_random_edge
+  device: cuda
+  epochs: 200
+  eta_min: 1.0e-06
+  focal_loss: false
+  initial_lr: 0.0001
+  loss: CrossEntropyLoss
+  weight_decay: 1.0e-05

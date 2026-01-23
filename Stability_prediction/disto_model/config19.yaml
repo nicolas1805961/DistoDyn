@@ -1,0 +1,16 @@
+model:
+  L_max: 1024
+  depth: 5
+  dropout: 0.3
+  hidden_channels: 24
+  type: RGAT
+training:
+  batch_size: 16
+  data_path: /pasteur/appa/scratch/nportal/MISATO/Binding_site/pt_folder_distance_distance_random
+  device: cuda
+  epochs: 200
+  eta_min: 1.0e-06
+  focal_loss: false
+  initial_lr: 0.0001
+  loss: CrossEntropyLoss
+  weight_decay: 1.0e-05
