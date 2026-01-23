@@ -1,0 +1,16 @@
+platform:
+  accel: "gpu"
+  cache_dir: "/nas/longleaf/home/dieckhau/protein-stability/v2_dataset_12072022/enzyme_stability_cache"
+  thermompnn_dir: "."
+
+data_loc:
+        megascale_csv: "pandora.csv"
+        megascale_splits: "dataset_splits/mega_splits.pkl"
+        #megascale_pdbs: "/pasteur/appa/scratch/nportal/boltz/stability_prediction/all_cif_files/"
+        #megascale_distograms: "/pasteur/appa/scratch/nportal/boltz/stability_prediction/new_wt_pt/"
+        megascale_distograms: "new_wt_pt/"
+        megascale_pdbs: "all_cif_files/"
+
+        fireprot_csv: "/nas/longleaf/home/dieckhau/protein-stability/enzyme-stability/data/fireprot/4_fireprotDB_bestpH.csv"
+        fireprot_splits: "/nas/longleaf/home/dieckhau/protein-stability/enzyme-stability/data/fireprot/fireprot_splits.pkl"
+        fireprot_pdbs: "/nas/longleaf/home/dieckhau/protein-stability/enzyme-stability/data/fireprot/pdbs/monomers/"
