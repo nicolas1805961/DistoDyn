@@ -1,0 +1,50 @@
+# STOCKHOLM 1.0
+
+#=GS UniRef90_UPI00360ACE95/173-207 DE [subseq from] hypothetical protein n=1 Tax=Pseudonocardia lutea TaxID=2172015 RepID=UPI00360ACE95
+#=GS UniRef90_UPI00360ACE95/202-236 DE [subseq from] hypothetical protein n=1 Tax=Pseudonocardia lutea TaxID=2172015 RepID=UPI00360ACE95
+#=GS UniRef90_UPI00360ACE95/233-263 DE [subseq from] hypothetical protein n=1 Tax=Pseudonocardia lutea TaxID=2172015 RepID=UPI00360ACE95
+#=GS UniRef90_UPI00360ACE95/349-376 DE [subseq from] hypothetical protein n=1 Tax=Pseudonocardia lutea TaxID=2172015 RepID=UPI00360ACE95
+#=GS UniRef90_UPI00360ACE95/355-390 DE [subseq from] hypothetical protein n=1 Tax=Pseudonocardia lutea TaxID=2172015 RepID=UPI00360ACE95
+#=GS UniRef90_UPI00351F11EA/371-408 DE [subseq from] uro-adherence factor A-like n=1 Tax=Pseudorasbora parva TaxID=51549 RepID=UPI00351F11EA
+#=GS UniRef90_UPI00351F11EA/526-562 DE [subseq from] uro-adherence factor A-like n=1 Tax=Pseudorasbora parva TaxID=51549 RepID=UPI00351F11EA
+#=GS UniRef90_UPI00351F11EA/610-646 DE [subseq from] uro-adherence factor A-like n=1 Tax=Pseudorasbora parva TaxID=51549 RepID=UPI00351F11EA
+#=GS UniRef90_UPI00351F11EA/755-791 DE [subseq from] uro-adherence factor A-like n=1 Tax=Pseudorasbora parva TaxID=51549 RepID=UPI00351F11EA
+#=GS UniRef90_UPI0031E94E58/160-194 DE [subseq from] methyl-accepting chemotaxis protein n=1 Tax=Pseudonocardia yuanmonensis TaxID=1095914 RepID=UPI0031E94E58
+#=GS UniRef90_UPI0031E94E58/174-208 DE [subseq from] methyl-accepting chemotaxis protein n=1 Tax=Pseudonocardia yuanmonensis TaxID=1095914 RepID=UPI0031E94E58
+#=GS UniRef90_UPI0031E94E58/187-222 DE [subseq from] methyl-accepting chemotaxis protein n=1 Tax=Pseudonocardia yuanmonensis TaxID=1095914 RepID=UPI0031E94E58
+#=GS UniRef90_UPI0031E94E58/200-236 DE [subseq from] methyl-accepting chemotaxis protein n=1 Tax=Pseudonocardia yuanmonensis TaxID=1095914 RepID=UPI0031E94E58
+#=GS UniRef90_UPI0031E94E58/299-334 DE [subseq from] methyl-accepting chemotaxis protein n=1 Tax=Pseudonocardia yuanmonensis TaxID=1095914 RepID=UPI0031E94E58
+#=GS UniRef90_A0A9W6NVP3/175-207    DE [subseq from] Methyl-accepting chemotaxis protein n=1 Tax=Pseudonocardia halophobica TaxID=29401 RepID=A0A9W6NVP3_9PSEU
+#=GS UniRef90_A0A9W6NVP3/205-235    DE [subseq from] Methyl-accepting chemotaxis protein n=1 Tax=Pseudonocardia halophobica TaxID=29401 RepID=A0A9W6NVP3_9PSEU
+#=GS UniRef90_A0A9W6NVP3/235-264    DE [subseq from] Methyl-accepting chemotaxis protein n=1 Tax=Pseudonocardia halophobica TaxID=29401 RepID=A0A9W6NVP3_9PSEU
+#=GS UniRef90_A0A9N9X1L4/326-354    DE [subseq from] Uncharacterized protein n=1 Tax=Phaedon cochleariae TaxID=80249 RepID=A0A9N9X1L4_PHACE
+#=GS UniRef90_UPI001E2FCCB2/146-179 DE [subseq from] hypothetical protein n=2 Tax=Pseudonocardia TaxID=1847 RepID=UPI001E2FCCB2
+#=GS UniRef90_UPI001E2FCCB2/177-208 DE [subseq from] hypothetical protein n=2 Tax=Pseudonocardia TaxID=1847 RepID=UPI001E2FCCB2
+#=GS UniRef90_UPI001E2FCCB2/202-235 DE [subseq from] hypothetical protein n=2 Tax=Pseudonocardia TaxID=1847 RepID=UPI001E2FCCB2
+#=GS UniRef90_UPI001E2FCCB2/215-249 DE [subseq from] hypothetical protein n=2 Tax=Pseudonocardia TaxID=1847 RepID=UPI001E2FCCB2
+
+protein_100                            SEEKKKAKEMLERLGASSELARELLDRANGNAEKAERLLRKLL
+UniRef90_UPI00360ACE95/173-207         -----SAESLIDRVGGTAESAESLITRVSGTADSAESLIT---
+UniRef90_UPI00360ACE95/202-236         ------AESLITRVGSTAGSADELITRVSGTADSAESLITR--
+UniRef90_UPI00360ACE95/233-263         ---------LITRVGSTAGSADELITRVSGTAESAETLIA---
+UniRef90_UPI00360ACE95/349-376         -------------VSGTAESAESLIDRVGGTAESAESLITR--
+UniRef90_UPI00360ACE95/355-390         -----SAESLIDRVGGTAESAESLITRVGGTAESAQELITR--
+UniRef90_UPI00351F11EA/371-408         -QETQRAQESLERNPGDTEWAQEGLERNLGHTERAQESL----
+UniRef90_UPI00351F11EA/526-562         ---PERAQESLERNPGDTEWAQESLERNPGDPERAQESLE---
+UniRef90_UPI00351F11EA/610-646         ---PERAQESLERNPGDTERAQESLERNPGDTERAQESLE---
+UniRef90_UPI00351F11EA/755-791         ---TERAQESLERNPGDTEWAQESLERNPGDPERAQESLE---
+UniRef90_UPI0031E94E58/160-194         ------ADELITRVTATAGSADELITRVGGTAESAEELITR--
+UniRef90_UPI0031E94E58/174-208         ------ADELITRVGGTAESAEELITRVGGTAESAEELITR--
+UniRef90_UPI0031E94E58/187-222         -----SAEELITRVGGTAESAEELITRVGGTAESAEELITR--
+UniRef90_UPI0031E94E58/200-236         ----ESAEELITRVGGTAESAEELITRVGGTAGSADELITR--
+UniRef90_UPI0031E94E58/299-334         -----SAEELITRVGGTAGSASELIERVQGTAASAEELVAR--
+UniRef90_A0A9W6NVP3/175-207            -------ESLIGRVGGTAESAEELITRVTGTAESAEGLIG---
+UniRef90_A0A9W6NVP3/205-235            ---------LIGRVGGTAESAEELITRVSGTAESAESLIG---
+UniRef90_A0A9W6NVP3/235-264            -----------GRVGGTAESAEELITRVAGTAESAESLLGR--
+UniRef90_A0A9N9X1L4/326-354            -----------SRMSPQIE-PNGSSDRANGSLDRAERLLRS--
+UniRef90_UPI001E2FCCB2/146-179         ------ADELLTRVAGTAESAESLIDRVAGTAESAESLIG---
+UniRef90_UPI001E2FCCB2/177-208         ---------LIGRVGSTAESAEELITRVSGTAGSADELITR--
+UniRef90_UPI001E2FCCB2/202-235         ------ADELITRVAGTAESAESLIDRVGGTAESAESLIG---
+UniRef90_UPI001E2FCCB2/215-249         -----SAESLIDRVGGTAESAESLIGRVGGTAASADELIT---
+#=GC RF                                xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+//
