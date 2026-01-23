@@ -1,0 +1,142 @@
+{
+  "10GS": {
+    "n_residues": 21,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": 0.5130896785300859,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_10GS.npz"
+  },
+  "11GS": {
+    "n_residues": 21,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": -0.5288444984410322,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_11GS.npz"
+  },
+  "13GS": {
+    "n_residues": 21,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": -0.5470625686933218,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_13GS.npz"
+  },
+  "16PK": {
+    "n_residues": 21,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": -0.32558343488656083,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_16PK.npz"
+  },
+  "184L": {
+    "n_residues": 20,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": 0.6509067795344445,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_184L.npz"
+  },
+  "185L": {
+    "n_residues": 20,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": 0.9653371044835791,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_185L.npz"
+  },
+  "186L": {
+    "n_residues": 20,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": 0.9698007117645339,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_186L.npz"
+  },
+  "187L": {
+    "n_residues": 20,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": 0.9611778165530837,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_187L.npz"
+  },
+  "188L": {
+    "n_residues": 20,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": 0.7280411981639221,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_188L.npz"
+  },
+  "1A07": {
+    "n_residues": 20,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": 0.23118263693886987,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_1A07.npz"
+  },
+  "1A08": {
+    "n_residues": 20,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": 0.8841196163285012,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_1A08.npz"
+  },
+  "1A09": {
+    "n_residues": 20,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": 0.4914865341064474,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_1A09.npz"
+  },
+  "1A0Q": {
+    "n_residues": 21,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": 0.9462837619826234,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_1A0Q.npz"
+  },
+  "1A1B": {
+    "n_residues": 20,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": 0.9354850225703147,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_1A1B.npz"
+  },
+  "1A1C": {
+    "n_residues": 20,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": -0.6166927408649204,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_1A1C.npz"
+  },
+  "1A1E": {
+    "n_residues": 20,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": 0.7621929646435335,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_1A1E.npz"
+  },
+  "1A28": {
+    "n_residues": 21,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": -0.38045967523036905,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_1A28.npz"
+  },
+  "1A2C": {
+    "n_residues": 21,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": -0.19972836852699777,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_1A2C.npz"
+  },
+  "1A30": {
+    "n_residues": 20,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": 0.5748160377210729,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_1A30.npz"
+  },
+  "1A3E": {
+    "n_residues": 20,
+    "n_residues_with_CA": 4,
+    "pearson_correlation_mean_vs_CA": -0.06695479201949978,
+    "fraction_equal_mean_vs_CA": 0.0,
+    "saved_file": "residue_adapt_1A3E.npz"
+  }
+}
