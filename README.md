@@ -41,7 +41,7 @@ where SLURM_ARRAY_TASK_ID is the config file number
 
 
 
-# Data pre-processing and model training for the protein stability prediction task
+# Model training for the protein stability prediction task
 
 ## ./ThermoMPNN_modified
 
