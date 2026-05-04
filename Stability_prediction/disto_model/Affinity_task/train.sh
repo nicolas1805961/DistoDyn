@@ -5,7 +5,7 @@
 #SBATCH --cpus-per-task=8
 #SBATCH --gres=gpu:1
 ##SBATCH --mem=50G
-#SBATCH --array=1-15
+#SBATCH --array=1-10
 #SBATCH -J boltz
 #SBATCH --output=slurm-%A_%a.out
 

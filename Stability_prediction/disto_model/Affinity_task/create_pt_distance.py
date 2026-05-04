@@ -8,7 +8,6 @@ import os
 import pickle
 import re
 import argparse
-from transformers import T5Tokenizer, T5EncoderModel
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 
@@ -44,14 +43,6 @@ one_to_three = {
 
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-# Load tokenizer + model only once
-tokenizer = T5Tokenizer.from_pretrained("Rostlab/prot_t5_xl_half_uniref50-enc", do_lower_case=False)
-model = T5EncoderModel.from_pretrained("Rostlab/prot_t5_xl_half_uniref50-enc").to(device)
-
-if device.type == "cpu":
-    model.to(torch.float32)
-model.eval()
 
 
 def get_prot_t5_embeddings(sequence, tokenizer, model, device):
@@ -172,9 +163,9 @@ def cif_to_graph(pkl_file, d_threshold):
     x = torch.cat([x, charges.unsqueeze(1), node_type.unsqueeze(1)], dim=1)
 
     mask = dmat < d_threshold
+    dmat = 1.0 - dmat / d_threshold
     edge_index = torch.nonzero(mask, as_tuple=False).T
     dists = dmat[edge_index[0], edge_index[1]]
-    dists = 1.0 - dists / d_threshold
     dists = dists[:, None]  # (E, 1)
 
     #fig, ax = plt.subplots(1, 1)
@@ -192,6 +183,7 @@ def cif_to_graph(pkl_file, d_threshold):
         pos=pos,
         edge_index=edge_index,
         edge_attr=edge_features,
+        distance_matrix=dmat,
         edge_type=edge_type,
     )
 
@@ -247,7 +239,7 @@ if __name__ == "__main__":
     #output_base_folder = 'pt_folder_distances'
 
     base_folder = '/pasteur/appa/scratch/nportal/MISATO/Affinity/affinity_data'
-    output_base_folder = '/pasteur/appa/scratch/nportal/MISATO/Affinity/EGNN/pt_folder_distances'
+    output_base_folder = '/pasteur/appa/scratch/nportal/MISATO/Affinity/pt_folder_distances_2'
 
     
     build_graph_dataset(

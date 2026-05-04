@@ -7,7 +7,7 @@
 #SBATCH --gres=gpu:1
 ##SBATCH --gres=gpu:1,gmem:50G
 ##SBATCH --mem=50G
-#SBATCH --array=1-15
+#SBATCH --array=1-1
 #SBATCH -J boltz
 #SBATCH --output=slurm-%A_%a.out
 

@@ -1,12 +1,14 @@
 #!/bin/bash
  
 #SBATCH -N 1
-#SBATCH --account=baies
-#SBATCH --partition=baies
-#SBATCH --gres=gpu:1
+##SBATCH --account=baies
+##SBATCH --partition=baies
+#SBATCH --partition=gpu
+##SBATCH --gres=gpu:1
+#SBATCH --gres=gpu:1,gmem:50G
 #SBATCH --cpus-per-task=8    # jackhmmer default requirement
-#SBATCH --mem=50G
-#SBATCH --array=1-456
+##SBATCH --mem=50G
+#SBATCH --array=1-9
 #SBATCH --output=/dev/null  # Prevent SLURM from making its own output file
 ##SBATCH --qos=gpu
  
@@ -18,27 +20,29 @@
 #export OPENMM_PLATFORM=CPU
 
 # Get the filename from list_dir (one filename per line)
-FILE_NAME=$(sed -n "${SLURM_ARRAY_TASK_ID}p" list_dir)
+FILE_NAME=$(sed -n "${SLURM_ARRAY_TASK_ID}p" missing_files)
 BASENAME=$(basename "${FILE_NAME}" .fasta)
  
 #INPUT_FASTA=/pasteur/appa/scratch/public/edeveaud/multimer.fasta
-BASE_DIR=~/alphafold2/data/sequences/AF2_input_paper/
+#BASE_DIR=/pasteur/appa/homes/nportal/misato-dataset/boltz_inputs_fasta/
+BASE_DIR=/pasteur/appa/scratch/nportal/af2/fasta_sequences
 #OUTPUT_DIR=/pasteur/appa/scratch/public/edeveaud/multimer_out
-OUTPUT_DIR=/pasteur/appa/scratch/nportal/alphafold2_results
+OUTPUT_DIR=/pasteur/appa/scratch/nportal/af2/vincent_paper
 PRESET_MODEL=multimer # multimer model
 PRESET_DB=full_dbs # <reduced_dbs|full_dbs>: Choose preset MSA database configuration
 
 module load alphafold/2.3.2
 
 # Redirect all output manually
-mkdir -p slurm_OUT
-exec > "slurm_OUT/slurm-${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}_${BASENAME}.out" 2>&1
+mkdir -p slurm_OUT_vincent
+exec > "slurm_OUT_vincent/slurm-${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}_${BASENAME}.out" 2>&1
 
 INPUT_PATH="${BASE_DIR}/${FILE_NAME}"
 
  
-/pasteur/appa/homes/nportal/alphafold2/alphafold --fasta_paths ${INPUT_PATH} \
-        --max_template_date 2025-07-10 \
+#/pasteur/appa/homes/nportal/alphafold2/alphafold --fasta_paths ${INPUT_PATH} \
+alphafold --fasta_paths ${INPUT_PATH} \
+        --max_template_date 2026-01-01 \
         --output_dir ${OUTPUT_DIR} \
         --model_preset multimer --data_dir ${ALPHAFOLD_DATA} \
         --uniref90_database_path ${ALPHAFOLD_DATA}/uniref90/uniref90.fasta \

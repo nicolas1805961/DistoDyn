@@ -249,11 +249,12 @@ class RGAT(torch.nn.Module):
 
 
 class RGAT_bs(nn.Module):
-    def __init__(self, in_channels, hidden_channels, out_channels, num_relations, edge_dim, depth, dropout):
+    def __init__(self, in_channels, hidden_channels, out_channels, num_relations, edge_dim, depth, dropout, return_attention=False):
         super().__init__()
         self.depth = depth
         self.dropout = dropout
         self.act = nn.GELU()  # GELU activation
+        self.return_attention = return_attention
 
         # GNN layers
         self.layers = nn.ModuleList()
@@ -280,14 +281,29 @@ class RGAT_bs(nn.Module):
         )
 
     def forward(self, x, edge_index, edge_type, edge_attr, batch):
+        all_attn_weights = [] if self.return_attention else None
+
         for i, (conv, norm, res_proj) in enumerate(zip(self.layers, self.norms, self.res_projs)):
             x_save = x
-            x = conv(x, edge_index, edge_type, edge_attr)
+
+            if self.return_attention:
+                # RGATConv must support return_attention_weights
+                x, attn_weights = conv(x, edge_index, edge_type, edge_attr, return_attention_weights=True)
+                all_attn_weights.append(attn_weights)
+            else:
+                x = conv(x, edge_index, edge_type, edge_attr)
+
             x = norm(x, batch)
             x = self.act(x)
             x = F.dropout(x, p=self.dropout, training=self.training)
             x = x + res_proj(x_save)  # Add residual (with projection if needed)
-        return self.fc_out(x)
+
+        out = self.fc_out(x)
+
+        if self.return_attention:
+            return out, all_attn_weights
+        else:
+            return out
     
 
 
@@ -342,7 +358,7 @@ class RGAT_affinity(nn.Module):
 
 
 class RGCN_bs(nn.Module):
-    def __init__(self, in_channels, hidden_channels, out_channels, num_relations, edge_dim, depth, dropout):
+    def __init__(self, in_channels, hidden_channels, out_channels, num_relations, depth, dropout):
         super().__init__()
         self.depth = depth
         self.dropout = dropout

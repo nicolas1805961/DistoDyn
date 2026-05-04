@@ -247,7 +247,9 @@ class BoltzWriter(BasePredictionWriter):
                 
                 # Save distogram
                 print(prediction.keys())
+                print('*********************************************************************')
                 if "logits" in prediction:
+                    print('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
                     softmax = prediction["logits"].to(dtype=torch.float32).cpu().numpy()
                     bin_edges = prediction["bin_edges"].to(dtype=torch.float32).cpu().numpy()
                     prob_contact = prediction["prob_contact"].to(dtype=torch.float32).cpu().numpy()

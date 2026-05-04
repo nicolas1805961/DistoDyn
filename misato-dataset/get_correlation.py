@@ -210,6 +210,30 @@ for k, v in ca_coords_list.items():
 # Convert list to array: shape (T, N_CA, 3)
 ca_coords = np.concatenate(ca_coords_list_final, axis=1) 
 
+# ca_coords: shape (T, N_CA, 3)
+T, N_CA, _ = ca_coords.shape
+
+# Preallocate distance array: shape (T, N_CA, N_CA)
+distances = np.zeros((T, N_CA, N_CA))
+
+for t in range(T):
+    # compute pairwise distance matrix for frame t
+    diff = ca_coords[t, :, np.newaxis, :] - ca_coords[t, np.newaxis, :, :]  # shape (N_CA, N_CA, 3)
+    distances[t] = np.linalg.norm(diff, axis=2)  # shape (N_CA, N_CA)
+
+bin_edges = np.arange(0, 21, 1)  # 0–20 Å, 1 Å bins
+n_bins = len(bin_edges) - 1
+
+# Initialize distogram: shape (N_CA, N_CA, n_bins)
+distogram = np.zeros((N_CA, N_CA, n_bins))
+
+for i in range(N_CA):
+    for j in range(N_CA):
+        hist, _ = np.histogram(distances[:, i, j], bins=bin_edges, density=True)
+        distogram[i, j] = hist  # probability distribution
+
+print(distogram.shape)  # should be (N_CA, N_CA, n_bins)
+
 #displacements = aligned_coords - aligned_coords[0]
 
 # --- Compute displacements relative to mean position per atom ---
@@ -231,20 +255,17 @@ C = np.einsum('tia,tja->ij', disp_norm, disp_norm) / disp_norm.shape[0]
 
 # Write YAML
 #output_dir = "./correlations"
-output_dir = "/pasteur/appa/scratch/nportal/MISATO/correlations"
+output_dir = "/pasteur/appa/scratch/nportal/MISATO/correlations_2"
 os.makedirs(output_dir, exist_ok=True)
 output_path = os.path.join(output_dir, f"{pdb_id}.pkl")
 
 to_save = {
+    "distogram": distogram,
+    "bin_edges": bin_edges,
     "matrix": C,
     "coords": ca_coords[0],
 }
 
 # Save C to a .pkl file
-with open(output_path, "wb") as f:
-    pickle.dump(to_save, f)
-
-#print(C.shape)
-
-# --- Threshold to define correlated edges ---
-#edges_ca = np.argwhere(np.abs(C) > 0.3)
+#with open(output_path, "wb") as f:
+#    pickle.dump(to_save, f)

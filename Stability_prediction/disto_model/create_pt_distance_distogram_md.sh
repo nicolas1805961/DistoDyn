@@ -8,14 +8,11 @@
 ##SBATCH --mem=50G
 #SBATCH --array=1-16972
 #SBATCH -J misato
-#SBATCH --output=/dev/null
-#SBATCH --error=/dev/null
+#SBATCH --output=logs/create_pt_distance_distogram_md_log.out
+#SBATCH --error=logs/create_pt_distance_distogram_md_log.out
 
 module load Python/3.11.5
 
 PDB_ID=$(sed -n "${SLURM_ARRAY_TASK_ID}p" pdb_ids.txt) #list_dir
 
-mkdir -p slurm_OUT_distance_rbf_distogram_full_0001
-exec > "slurm_OUT_distance_rbf_distogram_full_0001/${PDB_ID}.out" 2>&1
-
-python3 -u create_pt_distance_rbf_distogram_full.py --threshold 0.001 -pdb "${PDB_ID}"
+python3 -u create_pt_distance_distogram_md.py --threshold 0.0001 -pdb "${PDB_ID}"

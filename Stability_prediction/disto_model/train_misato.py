@@ -55,6 +55,8 @@ class Trainer:
             batch = batch.to(device)
             
             optimizer.zero_grad()
+            if "edge_type" not in batch:
+                batch.edge_type = torch.zeros(batch.edge_index.size(1), dtype=torch.long, device=device)
             pred = model(batch.x.float(), batch.edge_index, batch.edge_type, batch.edge_attr, batch.batch)
             
             loss = self.compute_loss_ce(pred, batch.y, writer, epoch)
@@ -78,6 +80,8 @@ class Trainer:
         with torch.no_grad():
             for batch in loader_iter:
                 batch = batch.to(device)
+                if "edge_type" not in batch:
+                    batch.edge_type = torch.zeros(batch.edge_index.size(1), dtype=torch.long, device=device)
                 pred = model(batch.x.float(), batch.edge_index, batch.edge_type, batch.edge_attr, batch.batch)
                 loss = self.compute_loss_ce(pred, batch.y, writer, epoch)
                 #if self.config["training"]["loss"] == "CrossEntropyLoss":
@@ -97,6 +101,8 @@ class Trainer:
             batch = batch.to(device)
             
             optimizer.zero_grad()
+            if "edge_type" not in batch:
+                batch.edge_type = torch.zeros(batch.edge_index.size(1), dtype=torch.long, device=device)
             pred = model(batch.x.float(), batch.edge_index, batch.edge_type, batch.batch)
             
             if self.config["training"]["loss"] == "CrossEntropyLoss":
@@ -118,6 +124,8 @@ class Trainer:
         with torch.no_grad():
             for batch in loader_iter:
                 batch = batch.to(device)
+                if "edge_type" not in batch:
+                    batch.edge_type = torch.zeros(batch.edge_index.size(1), dtype=torch.long, device=device)
                 pred = model(batch.x.float(), batch.edge_index, batch.edge_type, batch.batch)
                 if self.config["training"]["loss"] == "CrossEntropyLoss":
                     loss = self.compute_loss_ce(pred, batch.y, writer, epoch)
@@ -137,6 +145,8 @@ class Trainer:
             batch = batch.to(device)
             
             optimizer.zero_grad()
+            if "edge_type" not in batch:
+                    batch.edge_type = torch.zeros(batch.edge_index.size(1), dtype=torch.long, device=device)
             pred = model(batch.x.float(), batch.pos.float(), batch.edge_index, batch.edge_type, batch.edge_attr, batch.batch)
             
             loss = self.compute_loss_ce(pred, batch.y, writer, epoch)
@@ -160,6 +170,8 @@ class Trainer:
         with torch.no_grad():
             for batch in loader_iter:
                 batch = batch.to(device)
+                if "edge_type" not in batch:
+                    batch.edge_type = torch.zeros(batch.edge_index.size(1), dtype=torch.long, device=device)
                 pred = model(batch.x.float(), batch.pos.float(), batch.edge_index, batch.edge_type, batch.edge_attr, batch.batch)
                 loss = self.compute_loss_ce(pred, batch.y, writer, epoch)
                 #if self.config["training"]["loss"] == "CrossEntropyLoss":
@@ -299,9 +311,14 @@ def main():
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False, generator=g)
 
     # Model
-    node_feat_dim = train_dataset[0].x.shape[1]
-    edge_feat_dim = train_dataset[0].edge_attr.shape[1]  # your edge feature dimension
-    num_relations = train_dataset[0].edge_type.max().item() + 1
+    data_example = train_dataset[0]
+    node_feat_dim = data_example.x.shape[1]
+    if "edge_type" not in data_example:
+        num_relations = 1
+    else:
+        num_relations = data_example.edge_type.max().item() + 1
+    if data_example.edge_attr is not None:
+        edge_feat_dim = data_example.edge_attr.shape[1]  # your edge feature dimension
 
     if config["model"]["type"] == "RGCN":
         #model = RGCNNodeClassifier(
@@ -317,7 +334,6 @@ def main():
             hidden_channels=config["model"]["hidden_channels"],
             out_channels=2 if config["training"]["loss"] == "CrossEntropyLoss" else 1,
             num_relations=num_relations,
-            edge_dim=edge_feat_dim,
             depth=depth,
             dropout=config["model"]["dropout"]
         ).to(device)

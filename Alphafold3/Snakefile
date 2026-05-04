@@ -1,7 +1,7 @@
 import json
 from glob import glob
  
-INPUT_JSON_FILES = glob('data/sequences/remaining_bugs/*.json')
+INPUT_JSON_FILES = glob('/pasteur/appa/scratch/nportal/af3/vincent_input/*.json')
 samples_dict = {}
  
 for json_file in INPUT_JSON_FILES:
@@ -18,15 +18,15 @@ SAMPLES_LOWER = list(samples_dict.keys())
  
 rule all:
     input:
-        expand('/pasteur/appa/scratch/nportal/results_inference/{sample_name}/{sample_name}_model.cif', sample_name=SAMPLES_LOWER)
+        expand('/pasteur/appa/scratch/nportal/af3/af3_vincent_3/results_inference/{sample_name}/{sample_name}_model.cif', sample_name=SAMPLES_LOWER)
  
 rule datapipeline:
     input:
         lambda wildcards: samples_dict[wildcards.sample_name]['json_file']
     output:
-        '/pasteur/appa/scratch/nportal/results_data/{sample_name}/{sample_name}_data.json'
+        '/pasteur/appa/scratch/nportal/af3/af3_vincent_3/results_data/{sample_name}/{sample_name}_data.json'
     log:
-        'results_data/logs/{sample_name}_data.log'  # Update log path to use sample_name wildcard
+        'results_data_3/logs/{sample_name}_data.log'  # Update log path to use sample_name wildcard
     threads: 8
     resources:
         mem_mb=128000,
@@ -35,26 +35,26 @@ rule datapipeline:
     shell:
         r"""
     module load alphafold/3.0.1
-        ~/alphafold3/alphafold3_runner.sh -o /pasteur/appa/scratch/nportal/results_data --run_data_pipeline {input} > {log} 2>&1
+        ~/alphafold3/alphafold3_runner.sh -o /pasteur/appa/scratch/nportal/af3/af3_vincent_3/results_data --run_data_pipeline {input} > {log} 2>&1
     """
  
 rule inference:
     input:
-        '/pasteur/appa/scratch/nportal/results_data/{sample_name}/{sample_name}_data.json'
+        '/pasteur/appa/scratch/nportal/af3/af3_vincent_3/results_data/{sample_name}/{sample_name}_data.json'
     output:
-        '/pasteur/appa/scratch/nportal/results_inference/{sample_name}/{sample_name}_model.cif'
+        '/pasteur/appa/scratch/nportal/af3/af3_vincent_3/results_inference/{sample_name}/{sample_name}_model.cif'
     log:
-        'results_inference/logs/{sample_name}_inference.log'  # Update log path to use sample_name wildcard
+        'results_inference_3/logs/{sample_name}_inference.log'  # Update log path to use sample_name wildcard
     params:
         models='models'
     threads: 1
     resources:
         mem_mb=80000,
-        slurm_partition="gpu", # baies
-        slurm_extra="--gres=gpu:1,gmem:50G" # --gres=gpu:1 --account=baies
+        slurm_partition="baies", # gpu
+        slurm_extra="--gres=gpu:1 --account=baies" # --gres=gpu:1,gmem:50G
     shell:
         r"""
     module load alphafold/3.0.1
-        ~/alphafold3/alphafold3_runner.sh -m {params.models} -o /pasteur/appa/scratch/nportal/results_inference --run_inference {input} > {log} 2>&1
-        rm -rf /pasteur/appa/scratch/nportal/results_inference/{sample_name}/seed*
+        ~/alphafold3/alphafold3_runner.sh -m {params.models} -o /pasteur/appa/scratch/nportal/af3/af3_vincent_3/results_inference --run_inference {input} > {log} 2>&1
+        rm -rf /pasteur/appa/scratch/nportal/af3/af3_vincent_3/results_inference/{sample_name}/seed*
     """

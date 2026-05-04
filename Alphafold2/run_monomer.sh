@@ -3,11 +3,14 @@
 #SBATCH -N 1
 #SBATCH --account=baies
 #SBATCH --partition=baies
+##SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
+##SBATCH --gres=gpu:1,gmem:50G
 #SBATCH --cpus-per-task=8    # jackhmmer default requirement
-#SBATCH --mem=50G
-#SBATCH --array=1-1
-#SBATCH --output=/dev/null  # Prevent SLURM from making its own output file
+#SBATCH --mem=80G
+#SBATCH --array=1-2
+##SBATCH --output=/dev/null  # Prevent SLURM from making its own output file
+#SBATCH --output=slurm_bootstrap_%A_%a.out   # garde un log de secours !
 ##SBATCH --qos=gpu
  
 #---- Job Name
@@ -18,27 +21,28 @@
 #export OPENMM_PLATFORM=CPU
 
 # Get the filename from list_dir (one filename per line)
-FILE_NAME=$(sed -n "${SLURM_ARRAY_TASK_ID}p" list_dir_sp)
+FILE_NAME=$(sed -n "${SLURM_ARRAY_TASK_ID}p" missing_files)
 BASENAME=$(basename "${FILE_NAME}" .fasta)
  
 #INPUT_FASTA=/pasteur/appa/scratch/public/edeveaud/multimer.fasta
-BASE_DIR=~/alphafold2/data/sequences/fasta_sequences/
+BASE_DIR=/pasteur/appa/scratch/nportal/af2/fasta_sequences
 #OUTPUT_DIR=/pasteur/appa/scratch/public/edeveaud/multimer_out
-OUTPUT_DIR=/pasteur/appa/scratch/nportal/af2_sp_results
+OUTPUT_DIR=/pasteur/appa/scratch/nportal/af2/af2_vincent_3
 PRESET_MODEL=monomer # multimer model
 PRESET_DB=full_dbs # <reduced_dbs|full_dbs>: Choose preset MSA database configuration
 
 module load alphafold/2.3.2
 
 # Redirect all output manually
-mkdir -p slurm_OUT
-exec > "slurm_OUT/slurm-${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}_${BASENAME}.out" 2>&1
+mkdir -p slurm_OUT_vincent_3_mising
+exec > "slurm_OUT_vincent_3_missing/slurm-${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}_${BASENAME}.out" 2>&1
 
 INPUT_PATH="${BASE_DIR}/${FILE_NAME}"
 
  
-/pasteur/appa/homes/nportal/alphafold2/alphafold --fasta_paths ${INPUT_PATH} \
-        --max_template_date 2025-07-10 \
+#/pasteur/appa/homes/nportal/alphafold2/alphafold --fasta_paths ${INPUT_PATH} \
+alphafold --fasta_paths ${INPUT_PATH} \
+        --max_template_date 2026-01-01 \
         --output_dir ${OUTPUT_DIR} \
         --model_preset monomer --data_dir ${ALPHAFOLD_DATA} \
         --uniref90_database_path ${ALPHAFOLD_DATA}/uniref90/uniref90.fasta \

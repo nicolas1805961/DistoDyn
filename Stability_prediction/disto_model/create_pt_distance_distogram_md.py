@@ -158,9 +158,8 @@ def cif_to_graph_contact_map(distance_file, distogram_file, fasta_file, cutoff_m
 
     with open(distogram_file, "rb") as f:
         data = pickle.load(f)
-        distogram = torch.from_numpy(data['distogram']['logits'])
-        bin_edges = torch.from_numpy(data['distogram']['bin_edges'])
-        distogram = torch.softmax(distogram, dim=-1)  # convert logits to probabilities
+        distogram = torch.from_numpy(data['distogram'])
+        bin_edges = torch.from_numpy(data['bin_edges'])
 
         # Compute bin centers by averaging consecutive edges
         bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2  # shape = 61
@@ -207,11 +206,11 @@ def cif_to_graph_contact_map(distance_file, distogram_file, fasta_file, cutoff_m
 
     #map_prob = distogram[edge_index[0], edge_index[1]]
 
-    print(f"Number of non-zero elements in adj_matrix: {torch.count_nonzero(adj_matrix)}")
-
-    fig, ax = plt.subplots(1, 1)
-    ax.imshow(adj_matrix, cmap='grey')
-    plt.show()
+    #print(f"Number of non-zero elements in adj_matrix: {torch.count_nonzero(adj_matrix)}")
+#
+    #fig, ax = plt.subplots(1, 1)
+    #ax.imshow(adj_matrix, cmap='grey')
+    #plt.show()
 
     edge_index = torch.cat([edge_index_distance, edge_index_disto], dim=1)
     edge_type  = torch.cat([edge_type_distance, edge_type_disto], dim=0)  # (E_d + E_c,)
@@ -236,11 +235,10 @@ def build_graph_dataset(base_distance_folder, base_distogram_folder, output_base
     preserving the relative folder structure in output_base_folder.
     """
     # Find all CIF files recursively
-    distogram_file = glob(os.path.join(base_distogram_folder, 'boltz_results_' + pdb_id, '**', "distogram*.pkl"), recursive=True)[0]
+    distogram_file = glob(os.path.join(base_distogram_folder, pdb_id + ".pkl"))[0]
     fasta_file = glob(os.path.join(base_fasta_folder, pdb_id + ".fasta"))[0]
     distance_file = glob(os.path.join(base_distance_folder, pdb_id + ".pkl"))[0]
     
-    assert os.path.basename(distogram_file).split('_')[1] == pdb_id, f"Distogram file {distogram_file} does not match PDB ID {pdb_id}"
     assert os.path.basename(fasta_file).split('.')[0] == pdb_id, f"Fasta file {fasta_file} does not match PDB ID {pdb_id}"
     assert os.path.basename(distance_file).split('.')[0] == pdb_id, f"Fasta file {fasta_file} does not match PDB ID {pdb_id}"
     
@@ -252,7 +250,7 @@ def build_graph_dataset(base_distance_folder, base_distogram_folder, output_base
     #graph = cif_to_graph(distogram_file, binding_site_file, fasta_file, cutoff_matrix, prob_threshold)  # <-- your function to parse CIF
     graph = cif_to_graph_contact_map(distance_file, distogram_file, fasta_file, cutoff_matrix, prob_threshold)
 
-    name = os.path.basename(distogram_file).split('_')[1]  # remove .pkl
+    name = os.path.basename(distogram_file).split('.')[0]  # remove .pkl
 
     if name in test_lines:
         save_path = os.path.join(output_base_folder, "test", name + ".pt")
@@ -497,15 +495,15 @@ if __name__ == "__main__":
     ("ARG", "TRP"): (11.355,0.889),
     ("TRP", "TRP"): (12.806,0.473)}
 
-    base_distance_folder = 'distance_dir'
-    base_distogram_folder = 'distogram_dir'
-    output_base_folder = 'pt_folder'
-    base_fasta_folder = 'fasta_dir'
+    #base_distance_folder = 'distance_dir'
+    #base_distogram_folder = 'correlation_dir'
+    #output_base_folder = 'pt_folder'
+    #base_fasta_folder = 'fasta_dir'
 
-    #base_distance_folder = '/pasteur/appa/scratch/nportal/MISATO/distances'
-    #base_distogram_folder = '/pasteur/appa/scratch/nportal/MISATO/Binding_site/inference_boltz1'
-    #output_base_folder = '/pasteur/appa/scratch/nportal/MISATO/Binding_site/Boltz1/pt_folder_distance_distogram_0001'
-    #base_fasta_folder = '/pasteur/appa/homes/nportal/misato-dataset/boltz_inputs_fasta'
+    base_distance_folder = '/pasteur/appa/scratch/nportal/MISATO/distances'
+    base_distogram_folder = '/pasteur/appa/scratch/nportal/MISATO/correlations_2'
+    output_base_folder = '/pasteur/appa/scratch/nportal/MISATO/Binding_site/pt_folder_distance_distogram_md'
+    base_fasta_folder = '/pasteur/appa/homes/nportal/misato-dataset/boltz_inputs_fasta'
 
     # Read a text file and store each line in a list
     with open("test_MD.txt", "r", encoding="utf-8") as f:

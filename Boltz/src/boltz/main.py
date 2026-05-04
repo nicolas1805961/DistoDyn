@@ -1009,8 +1009,10 @@ def predict(  # noqa: C901, PLR0915, PLR0912
 
     # Download necessary data and model
     if model == "boltz1":
+        print("Using Boltz-1 model.")
         download_boltz1(cache)
     elif model == "boltz2":
+        print("Using Boltz-2 model.")
         download_boltz2(cache)
     else:
         msg = f"Model {model} not supported. Supported: boltz1, boltz2."

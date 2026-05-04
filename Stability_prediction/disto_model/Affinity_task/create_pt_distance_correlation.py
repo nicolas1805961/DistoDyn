@@ -260,7 +260,7 @@ if __name__ == "__main__":
     #output_base_folder = 'pt_folder_distance_distogram'
 
     base_folder = '/pasteur/appa/scratch/nportal/MISATO/Affinity/affinity_data'
-    output_base_folder = '/pasteur/appa/scratch/nportal/MISATO/Affinity/EGNN/pt_folder_distances_correlation'
+    output_base_folder = '/pasteur/appa/scratch/nportal/MISATO/Affinity/pt_folder_distances_correlation_2'
 
     
     build_graph_dataset(

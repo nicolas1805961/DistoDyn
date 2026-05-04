@@ -8,9 +8,15 @@ import os
 import pickle
 import re
 import argparse
-#from transformers import T5Tokenizer, T5EncoderModel
+from transformers import T5Tokenizer, T5EncoderModel
 from tqdm import tqdm
 import matplotlib.pyplot as plt
+
+
+def normalized(feature):
+    feature = feature - feature.mean()
+    feature = feature / feature.std()
+    return feature
 
 
 one_to_three = {
@@ -37,15 +43,68 @@ one_to_three = {
 }
 
 
+def convert_aa(residue: str) -> str:
+    """
+    Convert PDB-specific residue names (including protonation or modified forms)
+    to their standard 3-letter amino acid codes.
+
+    Examples:
+      HIE, HID, HIP -> HIS
+      CYX, CYM -> CYS
+      ASH -> ASP
+      GLH -> GLU
+      MSE -> MET
+      Others map to themselves.
+    """
+    pdb_to_generic = {
+        # Histidine variants
+        'HID': 'HIS',
+        'HIE': 'HIS',
+        'HIP': 'HIS',
+
+        # Aspartic acid variants
+        'ASH': 'ASP',
+
+        # Glutamic acid variants
+        'GLH': 'GLU',
+
+        # Cysteine variants (oxidized, deprotonated, disulfide-bonded)
+        'CYX': 'CYS',
+        'CYM': 'CYS',
+
+        # Lysine variants
+        'LYN': 'LYS',
+
+        # Arginine variants
+        'ARN': 'ARG',
+
+        # Tyrosine variants
+        'TYM': 'TYR',
+
+        # Methionine selenium analog
+        'MSE': 'MET',
+
+        # Glutamine/asparagine protonation variants
+        'GLN1': 'GLN',
+        'ASN1': 'ASN',
+
+        # Tryptophan variants
+        'TRN': 'TRP',
+        'TRO': 'TRP',
+    }
+
+    return pdb_to_generic.get(residue.upper(), residue.upper())
+
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-## Load tokenizer + model only once
-#tokenizer = T5Tokenizer.from_pretrained("Rostlab/prot_t5_xl_half_uniref50-enc", do_lower_case=False)
-#model = T5EncoderModel.from_pretrained("Rostlab/prot_t5_xl_half_uniref50-enc").to(device)
+# Load tokenizer + model only once
+tokenizer = T5Tokenizer.from_pretrained("Rostlab/prot_t5_xl_half_uniref50-enc", do_lower_case=False)
+model = T5EncoderModel.from_pretrained("Rostlab/prot_t5_xl_half_uniref50-enc").to(device)
 
-#if device.type == "cpu":
-#    model.to(torch.float32)
-#model.eval()
+if device.type == "cpu":
+    model.to(torch.float32)
+model.eval()
 
 
 def get_prot_t5_embeddings(sequence, tokenizer, model, device):
@@ -136,70 +195,122 @@ def get_edges(coords, d_threshold, edge_index=None):
 
 
 
-def cif_to_graph_contact_map(distance_file, distogram_file, fasta_file, cutoff_matrix, prob_threshold):
+def cif_to_graph_contact_map(pkl_file, cutoff_matrix, prob_threshold, d_threshold, d_threshold_corr):
 
-    fasta_sequence = read_fasta(fasta_file)
-
-    x = one_hot_encode_sequence(fasta_sequence)
-
-    # Open and load the pickle
-    with open(distance_file, "rb") as f:
+    with open(pkl_file, "rb") as f:
         data = pickle.load(f)
-        dmat_distance = torch.from_numpy(data['matrix'])
-        pos = torch.from_numpy(data['coords'])
-        assert len(dmat_distance) == len(fasta_sequence), f"Distance matrix size {dmat_distance.shape} does not match sequence length {len(fasta_sequence)}"
+        dmat = torch.from_numpy(data['distance'])
+        correlation = torch.from_numpy(data['correlation_all'])
+        binding_ligand_mask = torch.from_numpy(data['binding_ligand_mask'])
+        fused_mask_filtered = torch.from_numpy(data['fused_mask_filtered'])
+        distogram = torch.from_numpy(data['distogram'])
+        bin_edges = torch.from_numpy(data['bin_edges'])
+        charges = normalized(torch.from_numpy(data['charges'])) # (N,)
+        node_type = torch.from_numpy(data['node_type']) # (N,)
+        one_hot = data['one_hot'] # (N, 2)
+        pos = torch.from_numpy(data['coords']) # (N, 3)
+        sequence = data['sequence'] # (N,)
+        aa_numbers = data['aa_numbers'] # (N,)
+        assert len(pos) == len(one_hot)
+    
+    with open('atom_classes.pickle', "rb") as f:
+        one_hot_data = pickle.load(f)
+        my_max = max(list(one_hot_data.values())) + 1
 
-    mask_distance = dmat_distance < 10.0
+    class_indices = []
+
+    for p in one_hot:
+        key = tuple(p.tolist())
+        if key in one_hot_data:
+            class_indices.append(one_hot_data[key])
+        else:
+            raise KeyError(f"Missing key in one_hot_data: {key}")
+
+    #class_indices = torch.tensor([one_hot_data.get(tuple(p.tolist()), 0) for p in one_hot])
+    x = torch.nn.functional.one_hot(torch.tensor(class_indices), num_classes=my_max).float()
+    x = torch.cat([x, charges.unsqueeze(1), node_type.unsqueeze(1)], dim=1)
+
+    mask_distance = dmat < d_threshold
+    dists_init = 1.0 - dmat / d_threshold
     edge_index_distance = torch.nonzero(mask_distance, as_tuple=False).T
-    dists = dmat_distance[edge_index_distance[0], edge_index_distance[1]]
-    dists = 1.0 - dists / 10.0
+    dists = dmat[edge_index_distance[0], edge_index_distance[1]]
+    dists = 1.0 - dists / d_threshold
     dists = dists[:, None]  # (E, 1)
     edge_type_distance = torch.zeros(edge_index_distance.shape[1], dtype=torch.long)
 
-    with open(distogram_file, "rb") as f:
-        data = pickle.load(f)
-        distogram = torch.from_numpy(data['distogram']['logits'])
-        bin_edges = torch.from_numpy(data['distogram']['bin_edges'])
-        distogram = torch.softmax(distogram, dim=-1)  # convert logits to probabilities
+    mask_corr = torch.abs(correlation) > d_threshold_corr
+    edge_index_corr = torch.nonzero(mask_corr, as_tuple=False).T
+    corr = correlation[edge_index_corr[0], edge_index_corr[1]]
+    corr = corr[:, None]  # (E, 1)
+    edge_type_corr = torch.ones(edge_index_corr.shape[1], dtype=torch.long)
 
-        # Compute bin centers by averaging consecutive edges
-        bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2  # shape = 61
-        # Add first and last bins to make 64 centers
-        first_center = bin_edges[0] - (bin_edges[1] - bin_edges[0])/2
-        last_center = bin_edges[-1] + (bin_edges[-1] - bin_edges[-2])/2
-        bin_centers = torch.cat([first_center[None], bin_centers, last_center[None]])  # shape = 64
-        
-        L = len(fasta_sequence)
-        contact_map = torch.zeros((L, L), dtype=torch.float32)
-        adj_matrix = torch.zeros((L, L), dtype=torch.float32)
+    # Compute bin centers by averaging consecutive edges
+    bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2  # shape = 61
+    # Add first and last bins to make 64 centers
+    first_center = bin_edges[0] - (bin_edges[1] - bin_edges[0])/2
+    last_center = bin_edges[-1] + (bin_edges[-1] - bin_edges[-2])/2
+    bin_centers = torch.cat([first_center[None], bin_centers, last_center[None]])  # shape = 64
+    
+    L = len(distogram)
+    contact_map = torch.zeros((L, L), dtype=torch.float32)
+    adj_matrix = torch.zeros((L, L), dtype=torch.float32)
 
-        # For each pair of residues
-        for i in range(L):
-            aa_i = one_to_three[fasta_sequence[i]]
-            for j in range(L):
-                aa_j = one_to_three[fasta_sequence[j]]
-                
-                # Get cutoff mean and sigma
-                if (aa_i, aa_j) in cutoff_matrix:
-                    mean, sigma = cutoff_matrix[(aa_i, aa_j)]
-                elif (aa_j, aa_i) in cutoff_matrix:
-                    mean, sigma = cutoff_matrix[(aa_j, aa_i)]
-                else:
-                    raise ValueError(f"No cutoff defined for pair ({aa_i}, {aa_j})")
-                
-                cutoff = mean + 1.645 * sigma
-                
-                # Find bins whose upper edge is <= cutoff
-                bins_to_sum = bin_centers <= cutoff  # bin_edges has length N_bins + 1
-                prob_sum = distogram[i, j, bins_to_sum].sum()
-                
-                contact_map[i, j] = prob_sum
-                contact_map[j, i] = prob_sum  # symmetric
-                adj_matrix[i, j] = 1 if prob_sum > prob_threshold else 0
-                adj_matrix[j, i] = adj_matrix[i, j]  # symmetric
+    # For each pair of residues
+    for i in range(L):
+        aa_i = sequence[i]
+        aa_i = convert_aa(aa_i)
+        if aa_i == '':
+            continue
+        for j in range(L):
+            aa_j = sequence[j]
+            aa_j = convert_aa(aa_j)
+            if aa_j == '':
+                continue
+            
+            # Get cutoff mean and sigma
+            if (aa_i, aa_j) in cutoff_matrix:
+                mean, sigma = cutoff_matrix[(aa_i, aa_j)]
+            elif (aa_j, aa_i) in cutoff_matrix:
+                mean, sigma = cutoff_matrix[(aa_j, aa_i)]
+            else:
+                raise ValueError(f"No cutoff defined for pair ({aa_i}, {aa_j})")
+            
+            cutoff = mean + 1.645 * sigma
+            
+            # Find bins whose upper edge is <= cutoff
+            bins_to_sum = bin_centers <= cutoff  # bin_edges has length N_bins + 1
+            prob_sum = distogram[i, j, bins_to_sum].sum()
+            
+            contact_map[i, j] = prob_sum
+            contact_map[j, i] = prob_sum  # symmetric
+            adj_matrix[i, j] = 1 if prob_sum > prob_threshold else 0
+            adj_matrix[j, i] = adj_matrix[i, j]  # symmetric
+    
+    # Convertit les masques en indices explicites
+    i = np.where(binding_ligand_mask)[0]
+    j = np.where(fused_mask_filtered)[0]
+
+    adj_matrix = adj_matrix.to(bool)
+    contact_map = contact_map.to(float)
+
+    for index in j:
+        aa_number = aa_numbers[index]
+        amino_atom_indices = np.where(aa_numbers == aa_number)[0]
+
+        value_adjacency = mask_distance[amino_atom_indices][:, binding_ligand_mask].sum(0)
+        value_contact_map = dists_init[index, binding_ligand_mask]
+
+        adj_matrix[index, binding_ligand_mask] = value_adjacency > 0
+        adj_matrix[:, index] = adj_matrix[index, :]
+
+        contact_map[index, binding_ligand_mask] = value_contact_map
+        contact_map[:, index] = contact_map[index, :]
+    
+    adj_matrix[np.ix_(i, i)] = mask_distance[np.ix_(i, i)]
+    contact_map[np.ix_(i, i)] = dists_init[np.ix_(i, i)]
     
     edge_index_disto = torch.nonzero(adj_matrix, as_tuple=False).T
-    edge_type_disto = torch.ones(edge_index_disto.shape[1], dtype=torch.long)
+    edge_type_disto = torch.full((edge_index_disto.shape[1],), 2, dtype=torch.long)
 
     map_prob = contact_map[edge_index_disto[0], edge_index_disto[1]]
     #map_prob = 1.0 - map_prob / d_threshold
@@ -207,15 +318,17 @@ def cif_to_graph_contact_map(distance_file, distogram_file, fasta_file, cutoff_m
 
     #map_prob = distogram[edge_index[0], edge_index[1]]
 
-    print(f"Number of non-zero elements in adj_matrix: {torch.count_nonzero(adj_matrix)}")
+    #fig, ax = plt.subplots(1, 4)
+    #ax[0].imshow(contact_map, cmap='plasma')
+    #ax[1].imshow(adj_matrix, cmap='grey')
+    #ax[2].imshow(mask_distance, cmap='grey')
+    #ax[3].imshow(mask_corr, cmap='grey')
+    #plt.show()
 
-    fig, ax = plt.subplots(1, 1)
-    ax.imshow(adj_matrix, cmap='grey')
-    plt.show()
+    edge_index = torch.cat([edge_index_distance, edge_index_disto, edge_index_corr], dim=1)
+    edge_type  = torch.cat([edge_type_distance, edge_type_disto, edge_type_corr], dim=0)  # (E_d + E_c,)
+    edge_features  = torch.cat([dists, map_prob, corr], dim=0).to(torch.float32)        # (E_d + E_c, 1)
 
-    edge_index = torch.cat([edge_index_distance, edge_index_disto], dim=1)
-    edge_type  = torch.cat([edge_type_distance, edge_type_disto], dim=0)  # (E_d + E_c,)
-    edge_features  = torch.cat([dists, map_prob], dim=0).to(torch.float32)        # (E_d + E_c, 1)
 
     assert edge_index.shape[1] == edge_type.shape[0] == edge_features.shape[0], f"Shapes do not match: {edge_index.shape}, {edge_type.shape}, {edge_features.shape}"
 
@@ -224,43 +337,36 @@ def cif_to_graph_contact_map(distance_file, distogram_file, fasta_file, cutoff_m
         pos=pos,
         edge_index=edge_index,
         edge_attr=edge_features,
-        sequence=fasta_sequence,
+        sequence=sequence,
         edge_type=edge_type
     )
 
 
 
-def build_graph_dataset(base_distance_folder, base_distogram_folder, output_base_folder, base_fasta_folder, test_lines, val_lines, train_lines, cutoff_matrix, prob_threshold, pdb_id):
+def build_graph_dataset(base_folder, output_base_folder, cutoff_matrix, prob_threshold, pdb_id, d_threshold, d_threshold_corr):
     """
     Process all CIF files found in any nested subfolder of base_cif_folder,
     preserving the relative folder structure in output_base_folder.
     """
     # Find all CIF files recursively
-    distogram_file = glob(os.path.join(base_distogram_folder, 'boltz_results_' + pdb_id, '**', "distogram*.pkl"), recursive=True)[0]
-    fasta_file = glob(os.path.join(base_fasta_folder, pdb_id + ".fasta"))[0]
-    distance_file = glob(os.path.join(base_distance_folder, pdb_id + ".pkl"))[0]
-    
-    assert os.path.basename(distogram_file).split('_')[1] == pdb_id, f"Distogram file {distogram_file} does not match PDB ID {pdb_id}"
-    assert os.path.basename(fasta_file).split('.')[0] == pdb_id, f"Fasta file {fasta_file} does not match PDB ID {pdb_id}"
-    assert os.path.basename(distance_file).split('.')[0] == pdb_id, f"Fasta file {fasta_file} does not match PDB ID {pdb_id}"
-    
+    pkl_file = glob(os.path.join(base_folder, '*', pdb_id + ".pkl"))[0]
 
-    print(f"Processing: {os.path.basename(distogram_file)}")
+    print(f"Processing: {os.path.basename(pkl_file)}")
     #print(cif_file)
     #print(fasta_file)
     #print(f"Saved: {save_path}")
     #graph = cif_to_graph(distogram_file, binding_site_file, fasta_file, cutoff_matrix, prob_threshold)  # <-- your function to parse CIF
-    graph = cif_to_graph_contact_map(distance_file, distogram_file, fasta_file, cutoff_matrix, prob_threshold)
+    graph = cif_to_graph_contact_map(pkl_file, cutoff_matrix, prob_threshold, d_threshold, d_threshold_corr)
 
-    name = os.path.basename(distogram_file).split('_')[1]  # remove .pkl
+    name = os.path.basename(pkl_file).split('.')[0]  # remove .pkl
 
-    if name in test_lines:
+    if 'test' in pkl_file:
         save_path = os.path.join(output_base_folder, "test", name + ".pt")
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    elif name in val_lines:
+    elif 'val' in pkl_file:
         save_path = os.path.join(output_base_folder, "val", name + ".pt")
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    elif name in train_lines:
+    elif 'train' in pkl_file:
         save_path = os.path.join(output_base_folder, "train", name + ".pt")
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
@@ -278,6 +384,8 @@ if __name__ == "__main__":
     print(' Processing single PDB ID: ', pdb_id)
 
     prob_threshold = args.threshold
+    d_threshold = 4.5
+    d_threshold_corr = 0.6
 
     #base_distance_folder = 'distance_dir'
     #base_distance_folder = 'distance_dir'
@@ -497,31 +605,16 @@ if __name__ == "__main__":
     ("ARG", "TRP"): (11.355,0.889),
     ("TRP", "TRP"): (12.806,0.473)}
 
-    base_distance_folder = 'distance_dir'
-    base_distogram_folder = 'distogram_dir'
-    output_base_folder = 'pt_folder'
-    base_fasta_folder = 'fasta_dir'
+    #base_folder = 'affinity_data'
+    #output_base_folder = 'pt_folder_distance_distogram'
 
-    #base_distance_folder = '/pasteur/appa/scratch/nportal/MISATO/distances'
-    #base_distogram_folder = '/pasteur/appa/scratch/nportal/MISATO/Binding_site/inference_boltz1'
-    #output_base_folder = '/pasteur/appa/scratch/nportal/MISATO/Binding_site/Boltz1/pt_folder_distance_distogram_0001'
-    #base_fasta_folder = '/pasteur/appa/homes/nportal/misato-dataset/boltz_inputs_fasta'
+    base_folder = '/pasteur/appa/scratch/nportal/MISATO/Affinity/affinity_data'
+    output_base_folder = '/pasteur/appa/scratch/nportal/MISATO/Affinity/pt_folder_distance_distogram_new_correlation'
 
     # Read a text file and store each line in a list
-    with open("test_MD.txt", "r", encoding="utf-8") as f:
-        test_lines = f.readlines()
-    test_lines = [line.strip() for line in test_lines]
-
-    with open("val_MD.txt", "r", encoding="utf-8") as f:
-        val_lines = f.readlines()
-    val_lines = [line.strip() for line in val_lines]
-
-    with open("train_MD.txt", "r", encoding="utf-8") as f:
-        train_lines = f.readlines()
-    train_lines = [line.strip() for line in train_lines]
 
     
     build_graph_dataset(
-        base_distance_folder, base_distogram_folder, output_base_folder, base_fasta_folder, test_lines, val_lines, train_lines, cutoff_matrix, prob_threshold, pdb_id
+        base_folder, output_base_folder, cutoff_matrix, prob_threshold, pdb_id, d_threshold, d_threshold_corr
     )
 

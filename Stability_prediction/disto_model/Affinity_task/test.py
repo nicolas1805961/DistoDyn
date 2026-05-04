@@ -39,6 +39,8 @@ def test_loop_rgat(model, loader, device):
     with torch.no_grad():
         for batch in loader_iter:
             batch = batch.to(device)
+            if "edge_type" not in batch:
+                batch.edge_type = torch.zeros(batch.edge_index.size(1), dtype=torch.long, device=device)
 
             out = model(batch.x.float(), batch.edge_index, batch.edge_type, batch.edge_attr, batch.batch)
             
@@ -95,6 +97,8 @@ def test_loop_EGNN(model, loader, device):
     with torch.no_grad():
         for batch in loader_iter:
             batch = batch.to(device)
+            if "edge_type" not in batch:
+                batch.edge_type = torch.zeros(batch.edge_index.size(1), dtype=torch.long, device=device)
 
             out = model(batch.x.float(), batch.pos.float(), batch.edge_index, batch.edge_type, batch.edge_attr, batch.batch)
             
@@ -150,11 +154,14 @@ def test_loop_rgcn(model, loader, device):
     with torch.no_grad():
         for batch in loader_iter:
             batch = batch.to(device)
+            if "edge_type" not in batch:
+                batch.edge_type = torch.zeros(batch.edge_index.size(1), dtype=torch.long, device=device)
 
             out = model(batch.x.float(), batch.edge_index, batch.edge_type, batch.batch)
             
             preds.append(out.cpu())
             targets.append(batch.y.cpu())
+            #print(np.sqrt(mean_squared_error(targets, preds)))
     
     # Concatenate
     preds = torch.cat(preds, dim=0).squeeze()
@@ -204,6 +211,36 @@ weight_decay = config["training"]["weight_decay"]
 if 'distance_rbf' in config["training"]["data_path"]:
     print("Using test_distance_rbf_distogram_full_new dataset")
     data_path = r'test_distance_rbf_distogram_full_new'
+elif 'distance_distance_random' in config["training"]["data_path"]:
+    print("Using test_distance_distance_random dataset")
+    data_path = r'test_distance_distance_random'
+elif 'rewired_5000_distogram' in config["training"]["data_path"]:
+    print("Using test_distance_rewired_5000_distogram dataset")
+    data_path = r'test_distance_rewired_5000_distogram'
+elif 'rewired_1000_distogram' in config["training"]["data_path"]:
+    print("Using test_distance_rewired_1000_distogram dataset")
+    data_path = r'test_distance_rewired_1000_distogram'
+elif 'rewired_100_distogram' in config["training"]["data_path"]:
+    print("Using test_distance_rewired_100_distogram dataset")
+    data_path = r'test_distance_rewired_100_distogram'
+elif 'rewired_10_distogram' in config["training"]["data_path"]:
+    print("Using test_distance_rewired_10_distogram dataset")
+    data_path = r'test_distance_rewired_10_distogram'
+elif 'rewired_5000' in config["training"]["data_path"]:
+    print("Using test_distance_rewired_5000 dataset")
+    data_path = r'test_distance_rewired_5000'
+elif 'rewired_1000' in config["training"]["data_path"]:
+    print("Using test_distance_rewired_1000 dataset")
+    data_path = r'test_distance_rewired_1000'
+elif 'rewired_100' in config["training"]["data_path"]:
+    print("Using test_distance_rewired_100 dataset")
+    data_path = r'test_distance_rewired_100'
+elif 'rewired_10' in config["training"]["data_path"]:
+    print("Using test_distance_rewired_10 dataset")
+    data_path = r'test_distance_rewired_10'
+elif 'distance_distogram_new_correlation' in config["training"]["data_path"]:
+    print("Using test_distance_distogram_new_correlation dataset")
+    data_path = r'test_distance_distogram_new_correlation'
 elif 'distance_distogram_full_correlation' in config["training"]["data_path"]:
     print("Using test_distance_distogram_full_correlation dataset")
     data_path = r'test_distance_distogram_full_correlation'
@@ -231,9 +268,6 @@ elif 'distogram_new' in config["training"]["data_path"]:
 elif 'distance_distogram_random_edge' in config["training"]["data_path"]:
     print("Using test_distance_distogram_random_edge dataset")
     data_path = r'test_distance_distogram_random_edge'
-elif 'distance_distogram_correlation' in config["training"]["data_path"]:
-    print("Using test_distance_distogram_correlation dataset")
-    data_path = r'test_distance_distogram_correlation'
 elif 'distances_correlation' in config["training"]["data_path"]:
     print("Using test_distance_correlation dataset")
     data_path = r'test_distance_correlation'
@@ -258,9 +292,16 @@ test_dataset = ProteinGraphDataset(root=os.path.join(data_path, "test"), root_gt
 test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
 # Model
-node_feat_dim = test_dataset[0].x.shape[1]
-edge_feat_dim = test_dataset[0].edge_attr.shape[1]  # your edge feature dimension
-num_relations = test_dataset[0].edge_type.max().item() + 1
+data_example = test_dataset[0]
+node_feat_dim = data_example.x.shape[1]
+if "edge_type" not in data_example:
+    num_relations = 1
+else:
+    num_relations = data_example.edge_type.max().item() + 1
+if data_example.edge_attr is not None:
+    edge_feat_dim = data_example.edge_attr.shape[1]  # your edge feature dimension
+
+print(num_relations)
 
 #model = RGCNNodeClassifier(
 #            in_dim=node_feat_dim,

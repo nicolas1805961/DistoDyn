@@ -45,10 +45,11 @@ class ProteinGraphDataset(Dataset):
     def get(self, idx):
         # Load the .pt file
         graph_data = torch.load(self.pt_files[idx], weights_only=False)
-
-        gt = torch.from_numpy(np.load(self.gt_files[idx])).to(torch.float32)
-
-        graph_data.y = gt  # Add the label to the Data object
+        if isinstance(graph_data, tuple):
+            graph_data = graph_data[0]  # Unpack if it's a tuple
+        else:
+            gt = torch.from_numpy(np.load(self.gt_files[idx])).to(torch.float32)
+            graph_data.y = gt  # Add the label to the Data object
 
         # Make sure it's a Data object (it should be from our preprocessing)
         if not isinstance(graph_data, Data):

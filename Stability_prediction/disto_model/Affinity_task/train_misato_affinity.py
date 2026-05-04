@@ -40,6 +40,8 @@ class Trainer:
             batch = batch.to(device)
             
             optimizer.zero_grad()
+            if "edge_type" not in batch:
+                batch.edge_type = torch.zeros(batch.edge_index.size(1), dtype=torch.long, device=device)
             pred = model(batch.x.float(), batch.edge_index, batch.edge_type, batch.edge_attr, batch.batch)
             
             loss = self.compute_loss(pred, batch.y, writer, epoch)
@@ -60,6 +62,8 @@ class Trainer:
         with torch.no_grad():
             for batch in loader_iter:
                 batch = batch.to(device)
+                if "edge_type" not in batch:
+                    batch.edge_type = torch.zeros(batch.edge_index.size(1), dtype=torch.long, device=device)
                 pred = model(batch.x.float(), batch.edge_index, batch.edge_type, batch.edge_attr, batch.batch)
                 loss = self.compute_loss(pred, batch.y, writer, epoch)
                 total_loss += loss.item() * batch.num_graphs
@@ -74,6 +78,8 @@ class Trainer:
         loader_iter = tqdm(loader, desc="Training", leave=False)
         for batch in loader_iter:
             batch = batch.to(device)
+            if "edge_type" not in batch:
+                batch.edge_type = torch.zeros(batch.edge_index.size(1), dtype=torch.long, device=device)
             
             optimizer.zero_grad()
             pred = model(batch.x.float(), batch.pos.float(), batch.edge_index, batch.edge_type, batch.edge_attr, batch.batch)
@@ -96,6 +102,8 @@ class Trainer:
         with torch.no_grad():
             for batch in loader_iter:
                 batch = batch.to(device)
+                if "edge_type" not in batch:
+                    batch.edge_type = torch.zeros(batch.edge_index.size(1), dtype=torch.long, device=device)
                 pred = model(batch.x.float(), batch.pos.float(), batch.edge_index, batch.edge_type, batch.edge_attr, batch.batch)
                 loss = self.compute_loss(pred, batch.y, writer, epoch)
                 total_loss += loss.item() * batch.num_graphs
@@ -111,6 +119,9 @@ class Trainer:
             batch = batch.to(device)
             
             optimizer.zero_grad()
+            if "edge_type" not in batch:
+                batch.edge_type = torch.zeros(batch.edge_index.size(1), dtype=torch.long, device=device)
+
             pred = model(batch.x.float(), batch.edge_index, batch.edge_type, batch.batch)
             
             loss = self.compute_loss(pred, batch.y, writer, epoch)
@@ -130,6 +141,8 @@ class Trainer:
         with torch.no_grad():
             for batch in loader_iter:
                 batch = batch.to(device)
+                if "edge_type" not in batch:
+                    batch.edge_type = torch.zeros(batch.edge_index.size(1), dtype=torch.long, device=device)
                 pred = model(batch.x.float(), batch.edge_index, batch.edge_type, batch.batch)
                 loss = self.compute_loss(pred, batch.y, writer, epoch)
                 total_loss += loss.item() * batch.num_graphs
@@ -198,11 +211,14 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True, generator=g)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False, generator=g)
 
-    # Model
-    node_feat_dim = train_dataset[0].x.shape[1]
-    edge_feat_dim = train_dataset[0].edge_attr.shape[1]
-    print(edge_feat_dim)
-    num_relations = train_dataset[0].edge_type.max().item() + 1
+    data_example = train_dataset[0]
+    node_feat_dim = data_example.x.shape[1]
+    if "edge_type" not in data_example:
+        num_relations = 1
+    else:
+        num_relations = data_example.edge_type.max().item() + 1
+    if data_example.edge_attr is not None:
+        edge_feat_dim = data_example.edge_attr.shape[1]  # your edge feature dimension
 
     if config["model"]["type"] == "RGCN":
         model = New_RGCN_complex_affinity(
