@@ -151,9 +151,9 @@ def cif_to_graph(distance_file, fasta_file, d_threshold):
         assert len(pos) == len(dmat)
 
     mask = dmat < d_threshold
+    dmat = 1.0 - dmat / d_threshold  # convert to similarity and normalize
     edge_index = torch.nonzero(mask, as_tuple=False).T
     dists = dmat[edge_index[0], edge_index[1]]
-    dists = 1.0 - dists / d_threshold
     dists = dists[:, None]  # (E, 1)
 
     #fig, ax = plt.subplots(1, 1)
@@ -173,6 +173,7 @@ def cif_to_graph(distance_file, fasta_file, d_threshold):
         edge_attr=edge_features,
         sequence=fasta_sequence,
         edge_type=edge_type,
+        distance_matrix=dmat,
     )
 
 
@@ -248,8 +249,8 @@ if __name__ == "__main__":
     #output_base_folder = 'pt_folder'
     #base_fasta_folder = 'fasta_dir'
 
-    base_distance_folder = '/pasteur/appa/scratch/nportal/MISATO/boltz_parsed/Binding_site/distances'
-    output_base_folder = '/pasteur/appa/scratch/nportal/MISATO/boltz_parsed/Binding_site/pt_folder_distances'
+    base_distance_folder = '/pasteur/appa/scratch/nportal/MISATO/distances'
+    output_base_folder = '/pasteur/appa/scratch/nportal/MISATO/Binding_site/pt_folder_distances_2'
     base_fasta_folder = '/pasteur/appa/homes/nportal/misato-dataset/boltz_inputs_fasta'
 
     # Read a text file and store each line in a list
