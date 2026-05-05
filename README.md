@@ -14,7 +14,11 @@ To generate pytorch geometric graphs (.pt files) containing the distance and dis
 
 python3 -u create_pt_distance_distogram_new.py --threshold 0.0001 -pdb "${PDB_ID}"
 
-where PDB_ID is the name of the pdb file in the misato dataset and threshold is the value used to binarize the probability matrix computed from distograms
+where PDB_ID is the name of the pdb file in the misato dataset and threshold is the value used to binarize the probability matrix computed from distograms.
+
+The following command allows to run inference on the binding affinity prediction task:
+
+python test.py --model_path <Path to the folder containing model's weights>
 
 
 # Data pre-processing for the binding site prediction task
@@ -25,7 +29,7 @@ To generate pytorch geometric graphs (.pt files) containing the distance and dis
 
 python3 -u create_pt_distance_distogram.py --threshold 0.0001 -pdb "${PDB_ID}"
 
-where PDB_ID is the name of the pdb file in the misato dataset and threshold is the value used to binarize the probability matrix computed from distograms
+where PDB_ID is the name of the pdb file in the misato dataset and threshold is the value used to binarize the probability matrix computed from distograms.
 
 
 
@@ -37,7 +41,11 @@ Once in the Stability_prediction/disto_model folder, run the following command t
 
 python3 train_misato.py config${SLURM_ARRAY_TASK_ID}.yaml
 
-where SLURM_ARRAY_TASK_ID is the config file number
+where SLURM_ARRAY_TASK_ID is the config file number.
+
+The following command allows to run inference on the binding site prediction task:
+
+python test.py --model_path <Path to the folder containing model's weights>
 
 
 
@@ -50,4 +58,8 @@ Once in the ./ThermoMPNN_modified, run the following command to train a model:
 python3 train_thermompnn.py config${SLURM_ARRAY_TASK_ID}.yaml
 
 where SLURM_ARRAY_TASK_ID is the config file number
+
+The following command allows to run inference on the protein stability prediction task:
+
+python thermompnn_benchmarking.py --model_path <Path to the folder containing model's weights>
 
