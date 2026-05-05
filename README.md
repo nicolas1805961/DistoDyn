@@ -61,5 +61,5 @@ where SLURM_ARRAY_TASK_ID is the config file number
 
 The following command allows to run inference on the protein stability prediction task:
 
-python thermompnn_benchmarking.py --model_path <Path to the folder containing model's weights>
+'python thermompnn_benchmarking.py --model_path <Path to the folder containing model's weights>'
 
